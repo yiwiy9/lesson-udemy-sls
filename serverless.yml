@@ -11,7 +11,14 @@ provider:
   memorySize: 128         # 最小（MB）
   timeout: 6              # デフォルト（seconds）
   versionFunctions: false # バージョン管理しない
+  httpApi:
+    cors: true            # CORS の許可
+
 
 functions:
-  hello:
-    handler: handler.hello
+  cy-store-data:
+    handler: cy_store_data.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /compare-yourself
