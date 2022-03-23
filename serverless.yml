@@ -17,8 +17,20 @@ provider:
 
 functions:
   cy-store-data:
-    handler: cy_store_data.handler
+    handler: cy_data/store.handler
     events:
       - httpApi:
           method: POST
           path: /compare-yourself
+  cy-delete-data:
+    handler: cy_data/delete.handler
+    events:
+      - httpApi:
+          method: DELETE
+          path: /compare-yourself
+  cy-get-data:
+    handler: cy_data/get.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /compare-yourself/{type}
