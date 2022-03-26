@@ -2,6 +2,15 @@ service: udemy-sls-intro
 
 frameworkVersion: '3'
 
+plugins:
+  - serverless-python-requirements
+
+package:
+  individually: true
+  patterns:
+    - '!./**'
+    - src/models/**
+
 provider:
   name: aws
   runtime: python3.9      # 最新ver
@@ -14,22 +23,30 @@ provider:
   httpApi:
     cors: true            # CORS の許可
 
-
 functions:
   cy-store-data:
-    handler: cy_data/store.handler
+    handler: src/functions/store.handler
+    package:
+      patterns:
+        - src/functions/store.py
     events:
       - httpApi:
           method: POST
           path: /compare-yourself
   cy-delete-data:
-    handler: cy_data/delete.handler
+    handler: src/functions/delete.handler
+    package:
+      patterns:
+        - src/functions/delete.py
     events:
       - httpApi:
           method: DELETE
           path: /compare-yourself
   cy-get-data:
-    handler: cy_data/get.handler
+    handler: src/functions/get.handler
+    package:
+      patterns:
+        - src/functions/get.py
     events:
       - httpApi:
           method: GET
