@@ -11,6 +11,9 @@ package:
     - '!./**'
     - src/models/**
 
+custom:
+  dynamodb_table: ${self:provider.stage}-compare-yourself
+
 provider:
   name: aws
   runtime: python3.9      # 最新ver
@@ -20,8 +23,25 @@ provider:
   memorySize: 128         # 最小（MB）
   timeout: 6              # デフォルト（seconds）
   versionFunctions: false # バージョン管理しない
+  environment:            # Lambda で使用する環境変数
+    DYNAMODB_TABLE: ${self:custom.dynamodb_table}
+    DYNAMODB_HOST: https://dynamodb.${self:provider.region}.amazonaws.com
+    REGION: ${self:provider.region}
   httpApi:
     cors: true            # CORS の許可
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamodb_table}
 
 functions:
   cy-store-data:
@@ -51,3 +71,22 @@ functions:
       - httpApi:
           method: GET
           path: /compare-yourself/{type}
+
+resources:
+  Resources:
+    CYDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Delete # CloudFormation Stack が削除されたら削除する（残す場合は、`Retain`）
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: user_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.dynamodb_table}
