@@ -1,14 +1,35 @@
 import json
+import logging
+import uuid
+import http.client as httplib
+from cerberus import Validator
 
-def store(data: dict) -> dict:
-    if 'age' not in data or not data['age']:
-        return {'statusCode': 422, 'body': json.dumps({'error_message': 'Validation Failed'})}
+from src.models import CompareYourselfModel
 
-    age = data['age']
-    return {'statusCode': 200, 'body': json.dumps({'age': age * 2})}
 
+schema = {'age': {'type': 'integer'},
+          'height': {'type': 'integer'},
+          'income': {'type': 'integer'}}
+v = Validator(schema=schema, require_all=True)
 
 def handler(event, context):
-    print(event['body'])
+    print('event: {}'.format(event))
     data = json.loads(event['body'])
-    return store(data)
+
+    if (not v.validate(data)):
+        logging.error(v.errors)
+        return {'statusCode': httplib.UNPROCESSABLE_ENTITY,
+                'body': json.dumps(v.errors)}
+
+    new_model = store(data['age'], data['height'], data['income'])
+    return {'statusCode': httplib.CREATED,
+            'body': json.dumps(dict(new_model))}
+
+
+def store(age: str, height: str, income: str) -> CompareYourselfModel:
+    model = CompareYourselfModel(user_id=str(uuid.uuid1()),
+                                     age=age,
+                                     height=height,
+                                     income=income)
+    model.save()
+    return model
